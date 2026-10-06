@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="description"
+        content="VINCIE-NExT: Unlocking Video Editing from Images via In-Context Modeling">
+  <meta name="keywords" content="Video Editing, In-context Learning, Image Editing, Chain-of-Editing, Diffusion Transformer">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VINCIE-NExT</title>
+
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
+        rel="stylesheet">
+  <link rel="stylesheet" href="./static/css/bulma.min.css">
+  <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="./static/css/index.css">
+
+  <script defer src="./static/js/fontawesome.all.min.js"></script>
+  <script src="./static/js/video_cases.js"></script>
+
+  <style>
+    /* Custom button size */
+    button.custom-size {
+      font-size: 0.9rem;
+      padding: 0.5em 1.25em;
+      border-radius: 6px;
+    }
+    .figure-caption {
+      font-size: 0.9rem;
+      color: #555;
+      margin-top: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .results-table-wrapper {
+      overflow-x: auto;
+      margin-bottom: 0.5rem;
+    }
+    .results-table {
+      font-size: 0.8rem;
+      margin: 0 auto;
+      white-space: nowrap;
+    }
+    .results-table th, .results-table td {
+      text-align: center !important;
+      vertical-align: middle !important;
+      padding: 0.35em 0.5em !important;
+    }
+    .results-table td:first-child, .results-table th:first-child {
+      text-align: left !important;
+    }
+    .results-table tr.closed-source td { color: #999; }
+    .results-table tr.ours td { background: #e8e8e8; }
+    .results-table tr.coe td { background: #f3f3f3; }
+    .chain {
+      font-family: 'Google Sans', sans-serif;
+      font-size: 1.15rem;
+      text-align: center;
+      margin: 1rem 0 1.25rem;
+    }
+    .chain .v { color: #3b6fb6; font-weight: bold; }
+    .chain .i { color: #4a9a4a; font-weight: bold; }
+    .chain .o { color: #e07b28; font-weight: bold; }
+    .video-container { max-width: 1440px !important; padding: 0 1.5rem; }
+    .video-tabs ul { flex-wrap: wrap; flex-shrink: 1; justify-content: center; }
+    .video-case {
+      border: 1px solid #e5e5e5;
+      border-radius: 8px;
+      padding: 0.75rem;
+      margin-bottom: 1rem;
+    }
+    .video-case .prompt {
+      font-size: 0.85rem;
+      color: #555;
+      font-style: italic;
+      margin-bottom: 0.6rem;
+    }
+    .video-grid {
+      display: grid;
+      gap: 0.5rem;
+      align-items: end;
+    }
+    .video-cell { text-align: center; min-width: 0; }
+    .video-cell .label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #444;
+      margin-bottom: 0.25rem;
+    }
+    .video-cell.ours .label { color: #e07b28; }
+    .video-cell video {
+      display: block;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      max-height: 60vh;
+      object-fit: contain;
+      background: #000;
+      border-radius: 4px;
+    }
+    .video-cell.ours video { outline: 2px solid #e07b28; }
+    @media (max-width: 768px) {
+      .video-grid { grid-template-columns: repeat(2, 1fr) !important; }
+    }
+  </style>
+</head>
+<body>
+
+
+<section class="hero">
+  <div class="hero-body">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column has-text-centered">
+          <h1 class="title is-1 publication-title">VINCIE-NExT: Unlocking Video Editing from Images via In-Context Modeling</h1>
+
+          <div class="is-size-6 publication-authors">
+            <span class="author-block">
+              <a href="https://leigang-qu.github.io/">Leigang Qu</a><sup>1</sup>,</span>
+            <span class="author-block">
+              <a href="https://klauscc.github.io/">Feng Cheng</a><sup>2</sup>,</span>
+            <span class="author-block">
+              <a href="https://ziyanyang.github.io/">Ziyan Yang</a><sup>2</sup>,</span>
+            <span class="author-block">
+              Bangbang Yang<sup>2</sup>,</span>
+            <span class="author-block">
+              Zhaoyang Huang<sup>2</sup>,</span>
+            <br>
+            <span class="author-block">
+              Wei Chow<sup>1</sup>,</span>
+            <span class="author-block">
+              <a href="https://yl3800.github.io/">Yicong Li</a><sup>3</sup>,</span>
+            <span class="author-block">
+              <a href="https://wenjiewwj.github.io/">Wenjie Wang</a><sup>3</sup>,</span>
+            <span class="author-block">
+              <a href="https://www.chuatatseng.com/">Tat-Seng Chua</a><sup>1</sup>,</span>
+            <span class="author-block">
+              Yan Zeng<sup>2</sup></span>
+          </div>
+
+          <div class="is-size-6 publication-authors">
+            <span class="author-block"><b style="color:#F2A900; font-weight:normal">&#x25B6 </b>1. NExT++ Lab, National University of Singapore</span>
+            <br>
+            <span class="author-block"><b style="color:#00f295cc; font-weight:normal">&#x25B6 </b>2. ByteDance Seed</span>
+            <br>
+            <span class="author-block"><b style="color:#4c8fdc; font-weight:normal">&#x25B6 </b>3. University of Science and Technology of China</span>
+          </div>
+
+          <div class="is-size-6 publication-authors" style="margin-top: 0.5rem;">
+            <span class="author-block"><b>NeurIPS 2026</b></span>
+          </div>
+
+          <div class="column has-text-centered">
+            <div class="publication-links">
+              <!-- PDF Link. TODO: replace with the arXiv link once it is available. -->
+              <span class="link-block">
+                <a href="#"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fas fa-file-pdf"></i>
+                  </span>
+                  <span>Paper</span>
+                </a>
+              </span>
+
+              <!-- Video Results Link. -->
+              <span class="link-block">
+                <a href="#videos"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fas fa-film"></i>
+                  </span>
+                  <span>Videos</span>
+                </a>
+              </span>
+
+              <!-- Code Link. -->
+              <span class="link-block">
+                <a href="https://anonymous.4open.science/r/VINCIE-NExT-17631" target="_blank"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fab fa-github"></i>
+                  </span>
+                  <span>Code</span>
+                  </a>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="section" style="padding-top: 0;">
+  <div class="container is-max-desktop">
+
+    <!-- Teaser + Abstract -->
+    <div class="columns is-centered has-text-justified">
+      <div class="column is-four-fifths">
+        <div class="content has-text-justified">
+          <img src="./static/images/teaser.jpg" alt="Teaser" width="100%" style="margin:0 auto">
+          <p class="figure-caption">
+            <b>Qualitative showcase of VINCIE-NExT across diverse video editing scenarios.</b>
+            Our method enables temporally consistent stylization, dynamic background replacement, identity and attribute editing, scene transformation, and object removal, while preserving motion, structure, and visual coherence across frames.
+          </p>
+        </div>
+        <h2 class="title is-3">Abstract</h2>
+        <p>
+          Building a capable video editor remains significantly harder than a video generator: editing requires (source, instruction, edited) triplets that are prohibitively expensive to annotate and difficult to synthesize at scale, whereas image editing has already reached maturity with millions of such pairs readily available.
+          In this work, we introduce <b>VINCIE-NExT</b>, a unified framework that transfers editing capability from images to videos through in-context visual demonstrations, alleviating the need for large-scale paired video editing data.
+          VINCIE-NExT decomposes video editing into a structured chain of composable sub-tasks (Video &rarr; Image &rarr; Image &rarr; Video), routing editing intent through the image domain and enabling scalable joint training from heterogeneous image and video corpora under a unified diffusion objective.
+          An image editing pair, synthesized by the model or supplied by the user, is prepended as an in-context visual demonstration that serves as a spatial appearance blueprint for every output frame.
+          To ground appearance edits across the interleaved context, we introduce a novel position encoding that links image demonstrations and video frames in a shared spatial coordinate system, enabling pixel-faithful propagation of appearance changes to every output frame.
+          Chain-of-Editing further provides principled test-time scaling: by executing the sub-task chain as progressive diffusion stages, editing quality can be improved by investing additional compute without retraining.
+          Comprehensive experiments on OpenVE-Bench demonstrate the state-of-the-art performance across diverse editing categories, with ablations confirming the effectiveness of each component.
+        </p>
+        <br/>
+      </div>
+    </div>
+
+    <!-- Framework -->
+    <div class="columns is-centered has-text-justified">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Framework</h2>
+        <div class="content has-text-justified">
+          <p>
+            Rather than modeling the edited video directly from the source video and instruction, which demands large-scale paired video data, VINCIE-NExT routes editing intent through the image domain, where mature large-scale editing priors are readily available:
+          </p>
+          <p class="chain">
+            <span class="v">Video</span> &rarr; <span class="i">Image</span> &rarr; <span class="i">Image</span> &rarr; <span class="o">Video</span>
+          </p>
+          <p>
+            <b>V&rarr;I</b> extracts a representative keyframe from the source video, <b>I&rarr;I</b> applies the instruction-guided edit at the image level, and <b>I&rarr;V</b> recomposes the edited image into a temporally consistent target video.
+            The whole chain is flattened into one interleaved token sequence and modeled by a single Diffusion Transformer, so the image pair (I<sup>s</sup>, I<sup>t</sup>) acts as an <i>in-context visual demonstration</i>, a pixel-grounded appearance blueprint for every output frame.
+            The backbone is a 3B MM-DiT initialized from the text-to-video model of <a href="https://vincie2025.github.io/">VINCIE</a>, shared by all sub-tasks and both inference stages.
+          </p>
+          <img src="./static/images/framework.jpg" alt="Framework" width="100%" style="margin:0 auto">
+          <p class="figure-caption">
+            Overview of VINCIE-NExT. Video editing is decomposed into a structured chain of sub-tasks, and the image editing pair serves as an in-context visual demonstration that transfers image editing priors to video generation via a unified diffusion backbone.
+          </p>
+
+          <h2 class="title is-4">Joint Training on Multi-Source Data</h2>
+          <p>
+            Because each sub-task is a valid suffix of the interleaved sequence, every sub-task can draw from independently collected data: abundant image editing pairs for I&rarr;I, image-conditioned video generation data for I&rarr;V, and full-chain samples, all supervised by a single diffusion objective with one set of parameters.
+            We further build <b>video-based in-context image editing (V&harr;I&harr;I)</b> data: GPT-4o annotates editing instructions for raw videos, which Seedream 4.5 applies to keyframes, yielding (source video, frame, edited frame) triplets <i>without</i> any paired video editing supervision.
+            Because the source video stays attached as context, each sample teaches exactly the V&rarr;I&rarr;I sub-step whose output is reused as the demonstration for V&rarr;I&rarr;I&rarr;V, so image editing ability transfers into video editing rather than remaining a standalone skill.
+          </p>
+          <p>
+            In total, training uses <b>1.20M</b> image editing pairs (I2I, from OmniEdit), <b>2.45M</b> paired video edits (V2V*, from OpenVE), and <b>1.63M</b> V&harr;I&harr;I triplets.
+          </p>
+
+          <h2 class="title is-4">TDF3D-RoPE</h2>
+          <p>
+            In-context editing poses two conflicting positional demands: the model must <i>distinguish</i> tokens from different shots (e.g., I<sup>s</sup> vs. I<sup>t</sup>) while <i>recognizing</i> spatially corresponding patches across shots to propagate edits pixel-faithfully.
+            Time Dual-Frequency 3D RoPE resolves this by fusing two 3D frequency tensors via element-wise addition: an <b>inter-shot component</b> with monotonically increasing global offsets that makes every shot distinguishable, and an <b>intra-video component</b> with zero global offset, so the same spatial location in any two shots shares identical (h, w) positions, enabling content-driven attention and pixel-faithful edit propagation.
+            We also apply <b>Temporal Position Randomization (TPR)</b> to image training data, sampling the temporal index uniformly instead of fixing it to zero, so that the model grounds correspondences in spatial content rather than temporal identity.
+          </p>
+
+          <h2 class="title is-4">Chain-of-Editing (CoE)</h2>
+          <p>
+            At inference, the decomposition is instantiated as two sequential diffusion stages.
+            <b>Stage 1 (V&rarr;I&rarr;I)</b> generates the edited keyframe from the source video and its temporal mid-frame, processing visual segments frame-independently to match the spatial nature of image editing.
+            <b>Stage 2 (V&rarr;I&rarr;I&rarr;V)</b> generates the edited video conditioned on the source video, source keyframe, and the Stage 1 latent, which is inserted directly in latent space without a VAE decode/re-encode cycle; the <i>same</i> backbone now attends jointly across frames to model temporal dependencies.
+            Because each stage is an independent diffusion process over an explicit interleaved context, the chain provides principled <b>test-time scaling</b>: additional compute (or a stronger external image editor) can be spent to improve editing fidelity without retraining.
+          </p>
+        </div>
+        <br/>
+      </div>
+    </div>
+
+    <!-- Quantitative results -->
+    <div class="columns is-centered has-text-justified">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Quantitative Results</h2>
+        <div class="content has-text-justified">
+          <p>
+            Evaluation on <b>OpenVE-Bench</b> (431 clips, eight editing categories), scored by Gemini 2.5 Pro on a 1&ndash;5 scale.
+            VINCIE-NExT achieves an overall score of <b>3.08</b>, surpassing all open-source methods (+0.59 over OpenVE-Edit, ~24% relative gain; +48.8% relative over the in-context video editor ICVE) and closing the gap to the proprietary Runway Aleph to 0.57, while substantially reducing the dependence on large-scale paired video editing data.
+            Global Style is the standout category (4.17, above Runway Aleph's 3.72), and Local Remove improves from 1.85 to 3.24 over OpenVE-Edit as edits are routed through a mature image editor.
+            Camera Edit remains the main limitation, since novel-viewpoint synthesis is a geometric operation outside the appearance-editing chain.
+          </p>
+        </div>
+        <div class="results-table-wrapper">
+          <table class="table is-narrow is-hoverable results-table">
+            <thead>
+              <tr>
+                <th>Method</th><th>Resolution</th><th>Overall</th>
+                <th>Global<br>Style</th><th>Background<br>Change</th><th>Local<br>Change</th><th>Local<br>Remove</th>
+                <th>Local<br>Add</th><th>Subtitle<br>Edit</th><th>Creative<br>Edit</th><th>Camera<br>Edit</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="closed-source"><td>Runway Aleph</td><td>1280&times;720</td><td>3.65</td><td>3.72</td><td>2.62</td><td>4.18</td><td>4.16</td><td>2.78</td><td>3.62</td><td>3.64</td><td>4.53</td></tr>
+              <tr><td>VACE</td><td>1280&times;720</td><td>1.57</td><td>1.49</td><td>1.55</td><td>2.07</td><td>1.46</td><td>1.26</td><td>1.48</td><td>1.47</td><td>1.62</td></tr>
+              <tr><td>OmniVideo</td><td>640&times;352</td><td>1.31</td><td>1.11</td><td>1.18</td><td>1.14</td><td>1.14</td><td>1.36</td><td>1.00</td><td>2.26</td><td>1.00</td></tr>
+              <tr><td>InsViE</td><td>720&times;480</td><td>1.53</td><td>2.20</td><td>1.06</td><td>1.48</td><td>1.36</td><td>1.17</td><td>2.18</td><td>2.02</td><td>1.09</td></tr>
+              <tr><td>Lucy-Edit</td><td>1280&times;704</td><td>2.15</td><td>2.27</td><td>1.57</td><td><u>3.20</u></td><td>1.75</td><td><b>2.30</b></td><td>1.61</td><td><u>2.86</u></td><td>1.61</td></tr>
+              <tr><td>ICVE</td><td>384&times;240</td><td>2.07</td><td>2.22</td><td>1.62</td><td>2.57</td><td><u>2.51</u></td><td>1.97</td><td>2.09</td><td>2.41</td><td>1.11</td></tr>
+              <tr><td>DITTO</td><td>832&times;480</td><td>1.98</td><td><u>4.01</u></td><td>1.68</td><td>2.03</td><td>1.53</td><td>1.41</td><td>2.81</td><td>1.23</td><td>1.32</td></tr>
+              <tr><td>OpenVE-Edit</td><td>1280&times;704</td><td><u>2.49</u></td><td>3.16</td><td><u>2.36</u></td><td>2.98</td><td>1.85</td><td>2.15</td><td><u>2.91</u></td><td>2.31</td><td><u>2.02</u></td></tr>
+              <tr class="ours"><td><b>VINCIE-NExT (Ours)</b></td><td>480&times;640</td><td><b>3.08</b></td><td><b>4.17</b></td><td><b>2.55</b></td><td><b>3.48</b></td><td><b>3.24</b></td><td><u>2.27</u></td><td><b>3.45</b></td><td><b>3.41</b></td><td><b>2.06</b></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="figure-caption">
+          Grey text denotes a closed-source commercial model. <b>Bold</b>: best and <u>underline</u>: second best among open-source methods.
+        </p>
+
+        <h2 class="title is-4">Ablation: Data Composition and Chain-of-Editing</h2>
+        <div class="content has-text-justified">
+          <p>
+            Training on V&harr;I&harr;I data alone already enables meaningful video editing, and CoE provides consistent gains when chain-structured data is present.
+            The full combination of all three data sources with CoE achieves the best overall score.
+          </p>
+        </div>
+        <div class="results-table-wrapper">
+          <table class="table is-narrow is-hoverable results-table">
+            <thead>
+              <tr>
+                <th>I2I</th><th>V2V*</th><th>V&harr;I&harr;I</th><th>CoE</th><th>Overall</th>
+                <th>Global<br>Style</th><th>Background<br>Change</th><th>Local<br>Change</th><th>Local<br>Remove</th>
+                <th>Local<br>Add</th><th>Subtitle<br>Edit</th><th>Creative<br>Edit</th><th>Camera<br>Edit</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>&#10003;</td><td></td><td></td><td></td><td>1.14</td><td>1.29</td><td>1.00</td><td>1.05</td><td>1.05</td><td>1.00</td><td>1.60</td><td>1.20</td><td>1.04</td></tr>
+              <tr class="coe"><td>&#10003;</td><td></td><td></td><td>&#10003;</td><td>1.05</td><td>1.05</td><td>1.00</td><td>1.01</td><td>1.03</td><td>1.00</td><td>1.27</td><td>1.06</td><td>1.00</td></tr>
+              <tr><td></td><td></td><td>&#10003;</td><td></td><td>1.34</td><td>1.68</td><td>1.00</td><td>1.12</td><td>1.03</td><td>1.06</td><td>2.23</td><td>2.09</td><td>1.03</td></tr>
+              <tr class="coe"><td></td><td></td><td>&#10003;</td><td>&#10003;</td><td>1.80</td><td>2.58</td><td>1.86</td><td>2.03</td><td>1.46</td><td>1.48</td><td>1.62</td><td>2.30</td><td>1.15</td></tr>
+              <tr><td></td><td>&#10003;</td><td></td><td></td><td>2.49</td><td>3.47</td><td>1.96</td><td>2.67</td><td>2.71</td><td>2.08</td><td>3.40</td><td>2.03</td><td>1.29</td></tr>
+              <tr class="coe"><td></td><td>&#10003;</td><td></td><td>&#10003;</td><td>2.57</td><td>3.32</td><td>2.11</td><td>3.07</td><td>2.87</td><td>2.03</td><td>3.49</td><td>1.88</td><td>1.32</td></tr>
+              <tr><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td></td><td>2.53</td><td>3.06</td><td>1.94</td><td>2.88</td><td>2.85</td><td>1.97</td><td>3.49</td><td>2.69</td><td>1.29</td></tr>
+              <tr class="coe"><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td><b>2.65</b></td><td>3.64</td><td>2.15</td><td>3.03</td><td>3.11</td><td>1.82</td><td>3.20</td><td>2.89</td><td>1.22</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="figure-caption">
+          Shaded rows apply Chain-of-Editing at inference time. All ablations use the Stage-1 model at 256&times;256 (the main table uses the Stage-2 model at 480&times;640), which explains the gap between 2.65 and 3.08.
+        </p>
+
+        <h2 class="title is-4">Is Paired Video Data the Main Driver?</h2>
+        <div class="content has-text-justified">
+          <p>
+            A <i>Pure V2V</i> model (same backbone and V2V data, no decomposition or CoE) scores only 2.32, below OpenVE-Edit (2.49), which trains on a superset of our V2V data, so the gains do not come from a stronger backbone.
+            Full data + CoE reaches 2.65 (+14.2%), and <b>+74.1% on Creative Edit</b>, a category with <i>no</i> V2V supervision, while adding only ~6% visual training tokens.
+          </p>
+        </div>
+        <div class="columns is-centered">
+          <div class="column is-narrow">
+            <div class="results-table-wrapper">
+              <table class="table is-narrow is-hoverable results-table">
+                <thead>
+                  <tr><th>Method</th><th>Overall</th><th>Global<br>Style</th><th>Background<br>Change</th><th>Local<br>Edit</th><th>Creative<br>Edit</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>Pure V2V (w/o decomp., w/o CoE)</td><td>2.32</td><td>3.13</td><td>1.89</td><td>2.22</td><td>1.66</td></tr>
+                  <tr class="ours"><td><b>Full data + CoE</b></td><td><b>2.65</b></td><td><b>3.64</b></td><td><b>2.15</b></td><td><b>2.65</b></td><td><b>2.89</b></td></tr>
+                  <tr><td>&Delta;</td><td>+14.2%</td><td>+16.3%</td><td>+13.8%</td><td>+19.5%</td><td>+74.1%</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="figure-caption">Local Edit averages Local Change, Local Remove, and Local Add.</p>
+          </div>
+        </div>
+        <div class="content has-text-justified">
+          <p>
+            A blinded pairwise <b>human study</b> on all 431 clips with 10 raters (Fleiss' &kappa; = 0.721) also prefers full data + CoE over V2V*-only + CoE on every dimension, most clearly Prompt Following (38% vs. 24%) and Consistency (28% vs. 9%).
+          </p>
+        </div>
+
+        <h2 class="title is-4">Test-time Scaling and Efficiency</h2>
+        <div class="columns is-vcentered">
+          <div class="column is-half">
+            <img src="./static/images/tts_steps.jpg" alt="Test-time scaling of Chain-of-Editing" width="100%">
+            <p class="figure-caption">Overall score (line) and inference time (bars) as the denoising steps of the intermediate image-editing stage increase. Scored by Gemini 3.1 Flash Lite.</p>
+          </div>
+          <div class="column is-half">
+            <div class="content has-text-justified">
+              <p>
+                Spending more denoising steps on the intermediate image-editing stage (1/4/16/64) improves the overall score monotonically from 2.30 to <b>2.81 (+22.2%)</b> without retraining.
+              </p>
+              <p>
+                Despite the two-stage design, inference is practical: on one H200 GPU with 50 steps, VINCIE-NExT takes 53.5s (18.4s + 35.1s).
+              </p>
+            </div>
+            <div class="results-table-wrapper">
+              <table class="table is-narrow is-hoverable results-table">
+                <thead><tr><th>Method</th><th>Inference Time</th></tr></thead>
+                <tbody>
+                  <tr><td>AnyV2V</td><td>11min 46s</td></tr>
+                  <tr><td>ICVE</td><td>118.1s</td></tr>
+                  <tr><td>Lucy-Edit</td><td>39.8s</td></tr>
+                  <tr class="ours"><td><b>Ours</b></td><td>53.5s</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="content has-text-justified">
+              <p>
+                On objective VBench metrics, VINCIE-NExT also scores best among recent baselines (imaging quality 0.715, quality average 0.819).
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <h2 class="title is-4">Ablation: TDF3D-RoPE, TPR, and Data Weights</h2>
+        <div class="columns is-mobile is-multiline">
+          <div class="column is-one-third-desktop is-full-mobile">
+            <img src="./static/images/abl_rope_coe.jpg" alt="Ablation on TDF3D-RoPE and CoE" width="100%">
+            <p class="figure-caption">TDF3D-RoPE and CoE are complementary; their combination achieves the best result.</p>
+          </div>
+          <div class="column is-one-third-desktop is-full-mobile">
+            <img src="./static/images/abl_tpr_coe.jpg" alt="Ablation on TPR and CoE" width="100%">
+            <p class="figure-caption">TPR and CoE interact multiplicatively; only their combination reaches peak performance.</p>
+          </div>
+          <div class="column is-one-third-desktop is-full-mobile">
+            <img src="./static/images/mf_weight.jpg" alt="Training data sampling weights" width="100%">
+            <p class="figure-caption">Each data source has a narrow optimal sampling weight; balancing all three is necessary.</p>
+          </div>
+        </div>
+
+        <h2 class="title is-4">Effect of Intermediate Image Editing Quality</h2>
+        <div class="content has-text-justified">
+          <p>
+            Thanks to the modular I&rarr;I interface, replacing self-editing in Stage 1 with a stronger external image editor (<a href="https://arxiv.org/abs/2508.02324">Qwen-Image-Edit</a> or Nano Banana) yields consistent improvement: advances in image editing transfer directly to video without retraining.
+          </p>
+          <img src="./static/images/abl_coe_qwen_nano.jpg" alt="Effect of intermediate image editing quality" width="70%" style="display:block; margin:0 auto">
+        </div>
+        <br/>
+      </div>
+    </div>
+
+    <!-- Qualitative results -->
+    <div class="columns is-centered has-text-justified">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Qualitative Results</h2>
+        <div class="content has-text-justified">
+          <h2 class="title is-4">1. Global Stylization and Compositional Editing</h2>
+          <p>
+            Global scene stylization (<b>left</b>, summer-to-snow) and localized compositional editing (<b>right</b>, injecting fire/water/wind), both maintaining temporal consistency without task-specific fine-tuning.
+          </p>
+          <img src="./static/images/case_study.jpg" alt="Case study" width="100%" style="margin:0 auto">
+
+          <h2 class="title is-4">2. Chain-of-Editing vs. Direct Inference</h2>
+          <p>
+            Comparison of V2V direct inference, CoE with self-editing, and CoE with an external image editor on subject replacement (<b>left</b>) and removal (<b>right</b>).
+            Direct inference produces flickering and ghosting; CoE eliminates this instability by anchoring to a reference image, and routing through an external editor further improves semantic accuracy with no retraining.
+          </p>
+          <img src="./static/images/case_coe.jpg" alt="CoE comparison" width="100%" style="margin:0 auto">
+
+        </div>
+        <br/>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<section class="section" id="videos" style="padding-top: 0;">
+  <div class="container video-container">
+    <div class="columns is-centered has-text-justified">
+      <div class="column">
+        <h2 class="title is-3">Video Results</h2>
+        <div class="content has-text-justified">
+          <p>
+            Edited videos on OpenVE-Bench from the supplementary material. Videos play automatically when scrolled into view and loop.
+          </p>
+        </div>
+
+        <h2 class="title is-4">1. Comparison with Baselines</h2>
+        <div class="content has-text-justified">
+          <p>
+            Source video alongside Lucy-Edit, ICVE, DITTO, and VINCIE-NExT (<span style="color:#e07b28; font-weight:bold;">Ours</span>).
+          </p>
+        </div>
+        <div class="tabs is-centered is-small is-toggle video-tabs" data-set="baselines"><ul></ul></div>
+        <div class="video-cases" id="video-cases-baselines"></div>
+
+        <h2 class="title is-4" style="margin-top: 2rem;">2. Chain-of-Editing Ablation</h2>
+        <div class="content has-text-justified">
+          <p>
+            Direct V2V inference, CoE with self-editing, and CoE with an external image editor (Nano Banana or Qwen-Image-Edit) supplying the intermediate edited keyframe.
+          </p>
+        </div>
+        <div class="tabs is-centered is-small is-toggle video-tabs" data-set="ablation"><ul></ul></div>
+        <div class="video-cases" id="video-cases-ablation"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="section" id="BibTeX">
+  <div class="container is-max-desktop content">
+    <h2 class="title">BibTeX</h2>
+
+    <pre id="bibtex"><code>@inproceedings{qu2026vincienext,
+    title={VINCIE-NExT: Unlocking Video Editing from Images via In-Context Modeling},
+    author={Qu, Leigang and Cheng, Feng and Yang, Ziyan and Yang, Bangbang and Huang, Zhaoyang and Chow, Wei and Li, Yicong and Wang, Wenjie and Chua, Tat-Seng and Zeng, Yan},
+    booktitle={Advances in Neural Information Processing Systems},
+    year={2026}
+  }
+</code></pre>
+
+    <div class="has-text-centered" style="margin-top: 15px;">
+      <button class="button is-link custom-size" onclick="copyBibtex()">
+        📋 Copy BibTeX
+      </button>
+    </div>
+  </div>
+</section>
+
+<script>
+function copyBibtex() {
+  const bibtex = document.getElementById("bibtex").innerText;
+  navigator.clipboard.writeText(bibtex).then(() => {
+    alert("✅ BibTeX copied to clipboard!");
+  });
+}
+
+// Supplementary video cases (data in static/js/video_cases.js).
+var VIDEO_CATEGORIES = [
+  ["global_style", "Global Style"],
+  ["background_change", "Background Change"],
+  ["local_change", "Local Change"],
+  ["local_remove", "Local Remove"],
+  ["local_add", "Local Add"],
+  ["subtitle_edit", "Subtitle Edit"],
+  ["creative_edit", "Creative Edit"]
+];
+var VIDEO_LABELS = {
+  "Ditto": "DITTO",
+  "V2V": "V2V (direct)",
+  "CoE": "CoE (self-editing)",
+  "CoE+ (CoE + Nano Banana)": "CoE + Nano Banana",
+  "CoE+ (CoE + Qwen-Image-Edit-2511)": "CoE + Qwen-Image-Edit"
+};
+
+// Load and play videos only while they are near the viewport.
+var videoObserver = new IntersectionObserver(function (entries) {
+  entries.forEach(function (e) {
+    var v = e.target;
+    if (e.isIntersecting) {
+      if (!v.src) { v.src = v.dataset.src; }
+      v.play().catch(function () {});
+    } else {
+      v.pause();
+    }
+  });
+}, { rootMargin: "200px" });
+
+function renderVideoCases(set, cat) {
+  var container = document.getElementById("video-cases-" + set);
+  container.querySelectorAll("video").forEach(function (v) { videoObserver.unobserve(v); });
+  container.innerHTML = "";
+  window.VIDEO_CASES[set].filter(function (c) { return c.cat === cat; }).forEach(function (c) {
+    var box = document.createElement("div");
+    box.className = "video-case";
+    var prompt = document.createElement("p");
+    prompt.className = "prompt";
+    prompt.textContent = "“" + c.prompt + "”";
+    box.appendChild(prompt);
+    var grid = document.createElement("div");
+    grid.className = "video-grid";
+    grid.style.gridTemplateColumns = "repeat(" + c.videos.length + ", 1fr)";
+    c.videos.forEach(function (item) {
+      var label = item[0];
+      var cell = document.createElement("div");
+      cell.className = "video-cell" + (label === "Ours" ? " ours" : "");
+      var span = document.createElement("span");
+      span.className = "label";
+      span.textContent = VIDEO_LABELS[label] || label;
+      var video = document.createElement("video");
+      video.dataset.src = "./" + item[1];
+      video.muted = true;
+      video.loop = true;
+      video.playsInline = true;
+      video.preload = "none";
+      video.addEventListener("loadedmetadata", function () {
+        video.style.aspectRatio = video.videoWidth + " / " + video.videoHeight;
+      });
+      cell.appendChild(span);
+      cell.appendChild(video);
+      grid.appendChild(cell);
+      videoObserver.observe(video);
+    });
+    box.appendChild(grid);
+    container.appendChild(box);
+  });
+}
+
+document.querySelectorAll(".video-tabs").forEach(function (tabs) {
+  var set = tabs.dataset.set;
+  var ul = tabs.querySelector("ul");
+  VIDEO_CATEGORIES.forEach(function (pair, i) {
+    var n = window.VIDEO_CASES[set].filter(function (c) { return c.cat === pair[0]; }).length;
+    if (!n) { return; }
+    var li = document.createElement("li");
+    li.innerHTML = "<a>" + pair[1] + "</a>";
+    li.addEventListener("click", function () {
+      ul.querySelectorAll("li").forEach(function (t) { t.classList.remove("is-active"); });
+      li.classList.add("is-active");
+      renderVideoCases(set, pair[0]);
+    });
+    ul.appendChild(li);
+  });
+  ul.querySelector("li").click();
+});
+</script>
+
+
+<footer class="footer">
+  <div class="container">
+    <div class="columns is-centered">
+      <div class="column is-8">
+        <div class="content">
+          <p style="text-align: center;">
+            The webpage is built based on <a href="https://github.com/nerfies/nerfies.github.io">Nerfies</a> and <a href="https://vincie2025.github.io/">VINCIE</a>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+
+</body>
+</html>
